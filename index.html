@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Skaltask — Client Discovery Form</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=Barlow:wght@700;800&display=swap" rel="stylesheet">
+<script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+body{font-family:'Inter',sans-serif;background:#F0F2F7;color:#1B2E4B;min-height:100vh;padding-bottom:4rem}
+.header{background:#1B2E4B;padding:2rem 1.5rem 2.2rem;text-align:center;position:relative}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:4px;background:linear-gradient(90deg,#2E7DAF,#4AA8D8,#C9A84C)}
+.header img{width:110px;height:auto;margin-bottom:.75rem}
+.header h1{font-family:'Barlow',sans-serif;font-size:1.8rem;font-weight:800;color:#fff;letter-spacing:.05em;margin-bottom:4px}
+.header p{font-size:13px;color:rgba(255,255,255,.6);max-width:440px;margin:0 auto;line-height:1.5}
+.prog-bar-wrap{background:#fff;border-bottom:1px solid #DDE3EC;padding:.65rem 1.5rem;display:flex;align-items:center;gap:12px;position:sticky;top:0;z-index:100}
+.prog-bg{flex:1;height:5px;background:#DDE3EC;border-radius:3px;overflow:hidden}
+.prog-fill{height:100%;width:0%;background:linear-gradient(90deg,#2E7DAF,#4AA8D8);border-radius:3px;transition:width .4s}
+.prog-pct{font-size:12px;font-weight:600;color:#2E7DAF;min-width:36px;text-align:right}
+.wrap{max-width:660px;margin:1.75rem auto 0;padding:0 1rem}
+.section{margin-bottom:1.75rem}
+.sec-head{display:flex;align-items:center;gap:10px;margin-bottom:.85rem;padding-bottom:.5rem;border-bottom:2px solid #2E7DAF}
+.sec-dot{width:30px;height:30px;background:#2E7DAF;border-radius:8px;display:flex;align-items:center;justify-content:center;color:#fff;font-size:13px;font-weight:700;flex-shrink:0}
+.sec-title{font-family:'Barlow',sans-serif;font-size:1rem;font-weight:700;color:#1B2E4B;letter-spacing:.02em}
+.sec-sub{font-size:11px;color:#6B7A99;margin-top:1px}
+.qcard{background:#fff;border:1px solid #DDE3EC;border-radius:12px;padding:1rem 1.2rem;margin-bottom:.65rem;transition:border-color .2s,box-shadow .2s}
+.qcard:focus-within{border-color:#4AA8D8;box-shadow:0 0 0 3px rgba(74,168,216,.1)}
+.qlabel{font-size:13px;font-weight:600;color:#1B2E4B;margin-bottom:5px;display:flex;gap:5px;align-items:flex-start}
+.req{color:#D94040;font-size:11px;margin-top:1px}
+.qhint{font-size:11px;color:#6B7A99;margin-bottom:8px;line-height:1.4}
+input[type=text],input[type=email],textarea{width:100%;padding:8px 11px;font-size:13px;font-family:'Inter',sans-serif;border:1px solid #DDE3EC;border-radius:8px;background:#FAFBFD;color:#1B2E4B;outline:none;transition:border-color .2s;resize:vertical}
+input[type=text]:focus,input[type=email]:focus,textarea:focus{border-color:#2E7DAF;background:#fff}
+textarea{min-height:72px;line-height:1.5}
+.opts{display:flex;flex-wrap:wrap;gap:7px;margin-top:4px}
+.opt-item{display:none}
+.opt-item+label{display:inline-flex;align-items:center;padding:5px 13px;font-size:12px;font-weight:500;border:1.5px solid #DDE3EC;border-radius:20px;cursor:pointer;color:#6B7A99;background:#FAFBFD;transition:all .15s;user-select:none}
+.opt-item+label:hover{border-color:#4AA8D8;color:#2E7DAF}
+.opt-item:checked+label{border-color:#2E7DAF;background:rgba(46,125,175,.09);color:#2E7DAF;font-weight:600}
+.field-error{font-size:11px;color:#D94040;margin-top:4px;display:none}
+.qcard.has-error input,.qcard.has-error textarea{border-color:#D94040}
+.qcard.has-error .field-error{display:block}
+.submit-wrap{text-align:center;margin-top:2rem}
+.submit-btn{display:inline-flex;align-items:center;gap:8px;padding:13px 42px;font-family:'Barlow',sans-serif;font-size:.95rem;font-weight:800;letter-spacing:.07em;color:#fff;background:#1B2E4B;border:none;border-radius:50px;cursor:pointer;transition:background .2s,transform .1s;text-transform:uppercase}
+.submit-btn:hover{background:#2E7DAF}
+.submit-btn:active{transform:scale(.97)}
+.submit-btn:disabled{background:#9aabb8;cursor:not-allowed}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.4);border-top-color:#fff;border-radius:50%;animation:spin .7s linear infinite;display:none}
+@keyframes spin{to{transform:rotate(360deg)}}
+.submit-note{font-size:11px;color:#6B7A99;margin-top:8px}
+.success{display:none;text-align:center;padding:3rem 1.5rem;max-width:460px;margin:3rem auto 0;background:#fff;border-radius:16px;border:1px solid #DDE3EC}
+.success-icon{width:64px;height:64px;background:rgba(29,138,94,.1);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 1rem;font-size:30px;color:#1D8A5E}
+.success h2{font-family:'Barlow',sans-serif;font-size:1.5rem;font-weight:800;color:#1B2E4B;margin-bottom:6px}
+.success p{font-size:13px;color:#6B7A99;line-height:1.6}
+.toast{position:fixed;bottom:1.5rem;left:50%;transform:translateX(-50%) translateY(16px);background:#1B2E4B;color:#fff;padding:10px 22px;border-radius:50px;font-size:13px;font-weight:500;opacity:0;pointer-events:none;transition:opacity .3s,transform .3s;z-index:9999;white-space:nowrap;max-width:90vw;text-align:center}
+.toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.toast.ok{background:#1D8A5E}
+.toast.err{background:#D94040}
+@media(max-width:580px){.header h1{font-size:1.4rem}.wrap{padding:0 .75rem}.qcard{padding:.85rem .95rem}}
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div style="font-family:'Barlow',sans-serif;font-size:2.8rem;font-weight:800;color:#fff;letter-spacing:.08em;margin-bottom:.5rem">SKALTASK</div>
+  <h1>CLIENT QUESTIONNAIRE</h1>
+  <p>Help us understand your business so we can build the right growth system for you. Takes about 5 minutes.</p>
+</div>
+
+<div class="prog-bar-wrap">
+  <div class="prog-bg"><div class="prog-fill" id="pf"></div></div>
+  <div class="prog-pct" id="pp">0%</div>
+</div>
+
+<div class="wrap" id="formWrap">
+<form id="form" novalidate>
+
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-dot">1</div>
+      <div><div class="sec-title">Business basics</div><div class="sec-sub">Tell us about your business</div></div>
+    </div>
+    <div class="qcard" id="c-q1">
+      <div class="qlabel">Business name and what you sell <span class="req">*</span></div>
+      <div class="qhint">e.g. Zara Boutique — customizable women's ethnic wear</div>
+      <textarea name="q1" id="q1" placeholder="Type here..."></textarea>
+      <div class="field-error">This field is required.</div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">How long have you been in business?</div>
+      <div class="opts">
+        <input class="opt-item" type="radio" name="q2" id="q2a" value="Just starting out"><label for="q2a">Just starting</label>
+        <input class="opt-item" type="radio" name="q2" id="q2b" value="Less than 1 year"><label for="q2b">Under 1 year</label>
+        <input class="opt-item" type="radio" name="q2" id="q2c" value="1–3 years"><label for="q2c">1–3 years</label>
+        <input class="opt-item" type="radio" name="q2" id="q2d" value="3+ years"><label for="q2d">3+ years</label>
+      </div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">How do you sell your products?</div>
+      <div class="opts">
+        <input class="opt-item" type="checkbox" name="q3" id="q3a" value="Online store"><label for="q3a">Online store</label>
+        <input class="opt-item" type="checkbox" name="q3" id="q3b" value="Physical store"><label for="q3b">Physical store</label>
+        <input class="opt-item" type="checkbox" name="q3" id="q3c" value="WhatsApp / DM orders"><label for="q3c">WhatsApp / DM</label>
+        <input class="opt-item" type="checkbox" name="q3" id="q3d" value="Both online and offline"><label for="q3d">Both</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-dot">2</div>
+      <div><div class="sec-title">Social media presence</div><div class="sec-sub">Where you currently stand online</div></div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">Which platforms are you active on?</div>
+      <div class="opts">
+        <input class="opt-item" type="checkbox" name="q4" id="q4a" value="Instagram"><label for="q4a">Instagram</label>
+        <input class="opt-item" type="checkbox" name="q4" id="q4b" value="Facebook"><label for="q4b">Facebook</label>
+        <input class="opt-item" type="checkbox" name="q4" id="q4c" value="YouTube"><label for="q4c">YouTube</label>
+        <input class="opt-item" type="checkbox" name="q4" id="q4d" value="Pinterest"><label for="q4d">Pinterest</label>
+        <input class="opt-item" type="checkbox" name="q4" id="q4e" value="None yet"><label for="q4e">None yet</label>
+      </div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">Current Instagram follower count?</div>
+      <div class="opts">
+        <input class="opt-item" type="radio" name="q5" id="q5a" value="0–500"><label for="q5a">0–500</label>
+        <input class="opt-item" type="radio" name="q5" id="q5b" value="500–2k"><label for="q5b">500–2k</label>
+        <input class="opt-item" type="radio" name="q5" id="q5c" value="2k–10k"><label for="q5c">2k–10k</label>
+        <input class="opt-item" type="radio" name="q5" id="q5d" value="10k+"><label for="q5d">10k+</label>
+        <input class="opt-item" type="radio" name="q5" id="q5e" value="Not on Instagram yet"><label for="q5e">Not on Instagram</label>
+      </div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">How often do you post right now?</div>
+      <div class="opts">
+        <input class="opt-item" type="radio" name="q6" id="q6a" value="Rarely or never"><label for="q6a">Rarely / never</label>
+        <input class="opt-item" type="radio" name="q6" id="q6b" value="1–2 times per week"><label for="q6b">1–2x / week</label>
+        <input class="opt-item" type="radio" name="q6" id="q6c" value="3–5 times per week"><label for="q6c">3–5x / week</label>
+        <input class="opt-item" type="radio" name="q6" id="q6d" value="Daily"><label for="q6d">Daily</label>
+      </div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">What content have you posted so far?</div>
+      <div class="opts">
+        <input class="opt-item" type="checkbox" name="q7" id="q7a" value="Product photos"><label for="q7a">Product photos</label>
+        <input class="opt-item" type="checkbox" name="q7" id="q7b" value="Reels / videos"><label for="q7b">Reels / videos</label>
+        <input class="opt-item" type="checkbox" name="q7" id="q7c" value="Stories"><label for="q7c">Stories</label>
+        <input class="opt-item" type="checkbox" name="q7" id="q7d" value="Behind the scenes"><label for="q7d">Behind the scenes</label>
+        <input class="opt-item" type="checkbox" name="q7" id="q7e" value="Customer testimonials"><label for="q7e">Testimonials</label>
+        <input class="opt-item" type="checkbox" name="q7" id="q7f" value="Nothing yet"><label for="q7f">Nothing yet</label>
+      </div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-dot">3</div>
+      <div><div class="sec-title">Audience and goals</div><div class="sec-sub">The more specific, the better</div></div>
+    </div>
+    <div class="qcard" id="c-q8">
+      <div class="qlabel">Who is your ideal customer? <span class="req">*</span></div>
+      <div class="qhint">Age, location, interests — e.g. Women aged 22–40, urban, interested in ethnic fusion fashion</div>
+      <textarea name="q8" id="q8" placeholder="Describe your ideal customer..."></textarea>
+      <div class="field-error">This field is required.</div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">Primary goal for social media?</div>
+      <div class="opts">
+        <input class="opt-item" type="checkbox" name="q9" id="q9a" value="Grow followers"><label for="q9a">Grow followers</label>
+        <input class="opt-item" type="checkbox" name="q9" id="q9b" value="Get DM enquiries"><label for="q9b">Get DM enquiries</label>
+        <input class="opt-item" type="checkbox" name="q9" id="q9c" value="Drive traffic"><label for="q9c">Drive traffic</label>
+        <input class="opt-item" type="checkbox" name="q9" id="q9d" value="Brand awareness"><label for="q9d">Brand awareness</label>
+        <input class="opt-item" type="checkbox" name="q9" id="q9e" value="Direct sales"><label for="q9e">Direct sales</label>
+        <input class="opt-item" type="checkbox" name="q9" id="q9f" value="All of the above"><label for="q9f">All of the above</label>
+      </div>
+    </div>
+    <div class="qcard" id="c-q10">
+      <div class="qlabel">What does success look like in 3 months? <span class="req">*</span></div>
+      <div class="qhint">e.g. 1,000 new followers, 20 orders/month from Instagram</div>
+      <textarea name="q10" id="q10" placeholder="Describe your goal..."></textarea>
+      <div class="field-error">This field is required.</div>
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-dot">4</div>
+      <div><div class="sec-title">Brand and competition</div><div class="sec-sub">Your identity and market</div></div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">Brand personality?</div>
+      <div class="opts">
+        <input class="opt-item" type="radio" name="q11" id="q11a" value="Elegant and premium"><label for="q11a">Elegant &amp; premium</label>
+        <input class="opt-item" type="radio" name="q11" id="q11b" value="Fun and colorful"><label for="q11b">Fun &amp; colorful</label>
+        <input class="opt-item" type="radio" name="q11" id="q11c" value="Minimal and modern"><label for="q11c">Minimal &amp; modern</label>
+        <input class="opt-item" type="radio" name="q11" id="q11d" value="Traditional and cultural"><label for="q11d">Traditional &amp; cultural</label>
+        <input class="opt-item" type="radio" name="q11" id="q11e" value="Youthful and trendy"><label for="q11e">Youthful &amp; trendy</label>
+        <input class="opt-item" type="radio" name="q11" id="q11f" value="Not sure yet"><label for="q11f">Not sure yet</label>
+      </div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">Brand assets ready?</div>
+      <div class="opts">
+        <input class="opt-item" type="radio" name="q12" id="q12a" value="Full brand kit"><label for="q12a">Full brand kit</label>
+        <input class="opt-item" type="radio" name="q12" id="q12b" value="Just a logo"><label for="q12b">Just a logo</label>
+        <input class="opt-item" type="radio" name="q12" id="q12c" value="Some colors in mind"><label for="q12c">Some colors in mind</label>
+        <input class="opt-item" type="radio" name="q12" id="q12d" value="Starting from scratch"><label for="q12d">Starting from scratch</label>
+      </div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">Competitors or accounts you admire</div>
+      <div class="qhint">Instagram handles or brand names</div>
+      <input type="text" name="q13" placeholder="e.g. @brand1, @brand2">
+    </div>
+  </div>
+
+  <div class="section">
+    <div class="sec-head">
+      <div class="sec-dot">5</div>
+      <div><div class="sec-title">Budget and your details</div><div class="sec-sub">Almost done!</div></div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">Monthly marketing budget?</div>
+      <div class="opts">
+        <input class="opt-item" type="radio" name="q14" id="q14a" value="Under Rs.10,000"><label for="q14a">Under Rs.10k</label>
+        <input class="opt-item" type="radio" name="q14" id="q14b" value="Rs.10,000–Rs.20,000"><label for="q14b">Rs.10k–20k</label>
+        <input class="opt-item" type="radio" name="q14" id="q14c" value="Rs.20,000–Rs.40,000"><label for="q14c">Rs.20k–40k</label>
+        <input class="opt-item" type="radio" name="q14" id="q14d" value="Rs.40,000+"><label for="q14d">Rs.40k+</label>
+        <input class="opt-item" type="radio" name="q14" id="q14e" value="Not sure yet"><label for="q14e">Not sure yet</label>
+      </div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">Can you provide content or do you need us to create it?</div>
+      <div class="opts">
+        <input class="opt-item" type="radio" name="q15" id="q15a" value="I will provide photos and videos"><label for="q15a">I'll provide everything</label>
+        <input class="opt-item" type="radio" name="q15" id="q15b" value="I have some, need more"><label for="q15b">I have some, need more</label>
+        <input class="opt-item" type="radio" name="q15" id="q15c" value="Need full content creation"><label for="q15c">Need full creation</label>
+      </div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">Any past bad experiences with marketing?</div>
+      <textarea name="q16" placeholder="e.g. Tried an agency, wasted money on ads that didn't work..."></textarea>
+    </div>
+    <div class="qcard" id="c-clientName">
+      <div class="qlabel">Your name <span class="req">*</span></div>
+      <input type="text" name="clientName" id="clientName" placeholder="Full name">
+      <div class="field-error">Please enter your name.</div>
+    </div>
+    <div class="qcard" id="c-clientEmail">
+      <div class="qlabel">Your email address <span class="req">*</span></div>
+      <input type="email" name="clientEmail" id="clientEmail" placeholder="you@example.com">
+      <div class="field-error">Please enter a valid email.</div>
+    </div>
+    <div class="qcard">
+      <div class="qlabel">Phone number (optional)</div>
+      <input type="text" name="clientPhone" placeholder="+91 98765 43210">
+    </div>
+    <div class="qcard">
+      <div class="qlabel">Anything else we should know?</div>
+      <textarea name="q17" placeholder="Any extra details, questions, or context..."></textarea>
+    </div>
+  </div>
+
+  <div class="submit-wrap">
+    <button type="submit" class="submit-btn" id="submitBtn">
+      <div class="spinner" id="spinner"></div>
+      <span id="btnText">&#9654;&nbsp; Send to Skaltask</span>
+    </button>
+    <div class="submit-note">Your response is emailed directly to skaltask@gmail.com</div>
+  </div>
+
+</form>
+</div>
+
+<div class="success" id="successBox">
+  <div class="success-icon">&#10003;</div>
+  <h2>Sent successfully!</h2>
+  <p>Thank you! We've received your details and will reach out within 24 hours with a custom growth strategy.<br><br><strong>— Team Skaltask</strong></p>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script>
+  emailjs.init('ojqsv-UoDfXxx9SIi');
+
+  var pf = document.getElementById('pf');
+  var pp = document.getElementById('pp');
+  var answeredNames = new Set();
+
+  function updateProgress() {
+    document.querySelectorAll('input[type=radio]:checked,input[type=checkbox]:checked').forEach(function(el){ answeredNames.add(el.name); });
+    document.querySelectorAll('textarea,input[type=text],input[type=email]').forEach(function(el){ if(el.value.trim()) answeredNames.add(el.name); });
+    var pct = Math.min(Math.round(answeredNames.size / 17 * 100), 100);
+    pf.style.width = pct + '%';
+    pp.textContent = pct + '%';
+  }
+
+  document.querySelectorAll('input,textarea').forEach(function(el){
+    el.addEventListener('input', updateProgress);
+    el.addEventListener('change', updateProgress);
+  });
+
+  function showToast(msg, cls) {
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'toast ' + cls + ' show';
+    setTimeout(function(){ t.className = 'toast'; }, 4000);
+  }
+
+  function getVals(name) {
+    var els = document.querySelectorAll('[name="' + name + '"]');
+    if (!els.length) return 'Not answered';
+    if (els[0].type === 'radio' || els[0].type === 'checkbox') {
+      var checked = Array.from(els).filter(function(e){ return e.checked; }).map(function(e){ return e.value; });
+      return checked.length ? checked.join(', ') : 'Not answered';
+    }
+    return els[0].value.trim() || 'Not answered';
+  }
+
+  function validate() {
+    var ok = true;
+    var pairs = [['q1','c-q1'],['q8','c-q8'],['q10','c-q10'],['clientName','c-clientName'],['clientEmail','c-clientEmail']];
+    pairs.forEach(function(p) {
+      var el = document.getElementById(p[0]);
+      var card = document.getElementById(p[1]);
+      if (el && card) {
+        var val = el.value.trim();
+        if (!val || (p[0] === 'clientEmail' && !val.includes('@'))) {
+          card.classList.add('has-error'); ok = false;
+        } else {
+          card.classList.remove('has-error');
+        }
+      }
+    });
+    return ok;
+  }
+
+  ['q1','q8','q10','clientName','clientEmail'].forEach(function(id){
+    var el = document.getElementById(id);
+    var card = document.getElementById('c-' + id);
+    if (el && card) el.addEventListener('input', function(){ card.classList.remove('has-error'); });
+  });
+
+  document.getElementById('form').addEventListener('submit', function(e) {
+    e.preventDefault();
+
+    if (!validate()) {
+      showToast('Please fill in the required fields.', 'err');
+      document.querySelector('.qcard.has-error').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      return;
+    }
+
+    var btn = document.getElementById('submitBtn');
+    var spinner = document.getElementById('spinner');
+    var btnText = document.getElementById('btnText');
+    btn.disabled = true;
+    spinner.style.display = 'block';
+    btnText.textContent = 'Sending...';
+
+    var clientName = getVals('clientName');
+    var submitted = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata' });
+
+    var message =
+      'SKALTASK — NEW CLIENT ENQUIRY\n' +
+      '================================\n' +
+      'Submitted: ' + submitted + '\n\n' +
+      'NAME:   ' + clientName + '\n' +
+      'EMAIL:  ' + getVals('clientEmail') + '\n' +
+      'PHONE:  ' + getVals('clientPhone') + '\n\n' +
+      '--- BUSINESS BASICS ---\n' +
+      'Business name & what they sell:\n' + getVals('q1') + '\n\n' +
+      'Time in business: ' + getVals('q2') + '\n' +
+      'How they sell: ' + getVals('q3') + '\n\n' +
+      '--- SOCIAL MEDIA ---\n' +
+      'Active platforms: ' + getVals('q4') + '\n' +
+      'Instagram followers: ' + getVals('q5') + '\n' +
+      'Posting frequency: ' + getVals('q6') + '\n' +
+      'Content posted so far: ' + getVals('q7') + '\n\n' +
+      '--- AUDIENCE & GOALS ---\n' +
+      'Ideal customer:\n' + getVals('q8') + '\n\n' +
+      'Social media goals: ' + getVals('q9') + '\n\n' +
+      'Success in 3 months:\n' + getVals('q10') + '\n\n' +
+      '--- BRAND & COMPETITION ---\n' +
+      'Brand personality: ' + getVals('q11') + '\n' +
+      'Brand assets: ' + getVals('q12') + '\n' +
+      'Competitor accounts: ' + getVals('q13') + '\n\n' +
+      '--- BUDGET & LOGISTICS ---\n' +
+      'Monthly budget: ' + getVals('q14') + '\n' +
+      'Content creation: ' + getVals('q15') + '\n\n' +
+      'Past marketing experience:\n' + getVals('q16') + '\n\n' +
+      'Additional notes:\n' + getVals('q17') + '\n\n' +
+      '================================\n' +
+      'Sent via Skaltask Client Discovery Form';
+
+    emailjs.send('service_a4xkyb6', 'template_ouaaf0b', {
+      client_name: clientName,
+      message: message
+    }).then(function() {
+      document.getElementById('formWrap').style.display = 'none';
+      document.getElementById('successBox').style.display = 'block';
+      showToast('Email sent to skaltask@gmail.com!', 'ok');
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+    }, function(error) {
+      btn.disabled = false;
+      spinner.style.display = 'none';
+      btnText.textContent = '▶ Send to Skaltask';
+      showToast('Failed to send. Check your EmailJS setup and try again.', 'err');
+      console.error('EmailJS error:', error);
+    });
+  });
+</script>
+</body>
+</html>
